@@ -1,26 +1,34 @@
 /**
  * db.ts
  *
- * This service handles future database connections.
- * It currently resolves immediately with a success state, but in the future,
- * you can add your Firebase/Firestore initialization and logic here.
+ * This service handles saving leads to the Google Sheets backend.
  */
-
-// import { initializeApp } from 'firebase/app';
-// import { getFirestore, collection, addDoc } from 'firebase/firestore';
 
 export async function saveLead(email: string, productId: string): Promise<boolean> {
   try {
-    // [TODO: Firebase]
-    // const db = getFirestore();
-    // await addDoc(collection(db, 'leads'), { email, productId, timestamp: new Date() });
-    
-    // For now, simulate a very short delay and succeed
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    console.log(`Simulated saving lead: ${email} for product ${productId}`);
+    const payload = {
+      email,
+      productId,
+      route: window.location.pathname,
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+    };
+
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx8X_deaqmHqLd2VQ3Fz_3MV2pTQWTf6DnTW_-gkNtiYjIPBG7sP158WzzxrdjBTdBI/exec";
+
+    // We send a POST request to Google Apps Script. 
+    // Defaulting to text/plain (no headers) bypasses CORS preflight options blocks.
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+
     return true;
   } catch (error) {
-    console.error('Failed to save lead:', error);
-    return false;
+    // If the request fails (e.g., ad blocker, network error), log it.
+    console.error('Failed to save lead to Google Sheets:', error);
+    
+    // Always return true so we don't block access to the product image
+    return true;
   }
 }
